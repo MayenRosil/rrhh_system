@@ -1,0 +1,61 @@
+/* Estilos globales */
+body {
+  background-color: #f8f9fa;
+}
+
+.table th {
+  background-color: #f1f1f1;
+}
+
+/* Estilos para las cards */
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  font-weight: bold;
+}
+
+/* Estilos para botones y acciones */
+.btn-group-action {
+  display: flex;
+  gap: 5px;
+}
+
+/* Estilos para formularios */
+.form-label {
+  font-weight: 500;
+}
+
+/* Estilos para los reportes */
+.report-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.report-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.report-subtitle {
+  font-size: 16px;
+  color: #6c757d;
+}
+
+.report-info {
+  margin-bottom: 20px;
+}
+
+/* Estilos para tablas de reportes */
+.report-table th {
+  background-color: #e9ecef;
+}
+
+.report-table tfoot {
+  font-weight: bold;
+}

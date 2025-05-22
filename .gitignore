@@ -54,7 +54,6 @@ desktop.ini
 *.d.ts.map
 
 # Archivos específicos de MySQL
-*.sql
 *.dump
 
 # Archivos temporales

@@ -169,12 +169,12 @@ const Perfil = () => {
                 
                 <ListGroup.Item>
                   <Row>
-                    <Col xs={4}><strong>Salario Actual:</strong></Col>
+                    <Col xs={4}><strong>Salario:</strong></Col>
                     <Col>Q {Number(perfil.salario_actual).toFixed(2)}</Col>
                   </Row>
                 </ListGroup.Item>
                 
-                <ListGroup.Item>
+                {/* <ListGroup.Item>
                   <Row>
                     <Col xs={4}><strong>Tipo de Pago:</strong></Col>
                     <Col>
@@ -183,7 +183,7 @@ const Perfil = () => {
                       {perfil.tipo_pago === 'MENSUAL' && 'Mensual'}
                     </Col>
                   </Row>
-                </ListGroup.Item>
+                </ListGroup.Item> */}
               </ListGroup>
             </Card.Body>
           </Card>

@@ -124,7 +124,7 @@ useEffect(() => {
                       <FaEye />
                     </Button>
                     
-                    {liquidacion.estado === 'CALCULADO' && (
+                    {/* {liquidacion.estado === 'CALCULADO' && (
                       <Button
                         variant="outline-success"
                         size="sm"
@@ -134,7 +134,7 @@ useEffect(() => {
                       >
                         <FaMoneyBillWave />
                       </Button>
-                    )}
+                    )} */}
                   </div>
                 </td>
               </tr>

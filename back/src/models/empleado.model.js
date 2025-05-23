@@ -9,7 +9,7 @@ class EmpleadoModel {
         SELECT e.id_empleado, e.codigo_empleado, e.nombre, e.apellido, 
                e.dpi, e.fecha_nacimiento, e.direccion, e.telefono, 
                e.email, e.fecha_contratacion, e.fecha_fin_contrato, 
-               e.estado, e.salario_actual, e.tipo_pago, 
+               e.estado, e.salario_actual, 
                p.nombre AS puesto, d.nombre AS departamento, 
                r.nombre AS rol
         FROM empleados e
@@ -34,7 +34,7 @@ class EmpleadoModel {
                e.dpi, e.fecha_nacimiento, e.direccion, e.telefono, 
                e.email, e.id_puesto, e.id_rol, e.fecha_contratacion, 
                e.fecha_fin_contrato, e.estado, e.salario_actual, 
-               e.tipo_pago, p.nombre AS puesto, d.nombre AS departamento, 
+               p.nombre AS puesto, d.nombre AS departamento, 
                r.nombre AS rol
         FROM empleados e
         JOIN puestos p ON e.id_puesto = p.id_puesto
@@ -64,7 +64,7 @@ async create(empleadoData) {
     try {
       // Ejecutar el procedimiento almacenado con los parámetros de salida
       const query = `
-        CALL sp_crear_empleado(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @p_resultado, @p_mensaje)
+        CALL sp_crear_empleado(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @p_resultado, @p_mensaje)
       `;
       
       await conn.query(query, [
@@ -80,7 +80,7 @@ async create(empleadoData) {
         Number(empleadoData.id_rol),
         empleadoData.fecha_contratacion,
         empleadoData.salario_actual,
-        empleadoData.tipo_pago,
+        //empleadoData.tipo_pago,
         hashedPassword
       ]);
       
@@ -126,7 +126,7 @@ async create(empleadoData) {
     
     try {
              const query = `
-        CALL sp_actualizar_empleado(?, ?, ?, ?, ?, ?, ?, ?, ?, @p_resultado, @p_mensaje)
+        CALL sp_actualizar_empleado(?, ?, ?, ?, ?, ?, ?, ?, @p_resultado, @p_mensaje)
       `;
       
       await conn.query(query, [
@@ -138,7 +138,7 @@ async create(empleadoData) {
         empleadoData.email,
         empleadoData.id_puesto,
         empleadoData.id_rol,
-        empleadoData.tipo_pago,
+        //empleadoData.tipo_pago,
       ]);
       // Obtener los valores de los parámetros de salida
       const [rows] = await conn.query('SELECT @p_resultado as resultado, @p_mensaje as mensaje');

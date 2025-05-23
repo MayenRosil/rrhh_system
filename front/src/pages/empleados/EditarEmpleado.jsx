@@ -37,20 +37,35 @@ const EditarEmpleado = () => {
   const [error, setError] = useState(null);
   const [selectedDepartamento, setSelectedDepartamento] = useState(null);
 
+  const fetchPuestosByDepartamento = async (iddepto) => {
+    if (iddepto) {
+      try {
+        const response = await api.get(`/puestos/departamento/${iddepto}`);
+        if (response.data.success) {
+          setPuestos(response.data.data);
+        }
+      } catch (error) {
+        console.error('Error al cargar puestos:', error);
+      }
+    } else {
+      setPuestos([]);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const empleadoRes = await getEmpleadoById(id);
-        
+
         if (empleadoRes.success) {
-          setEmpleado(empleadoRes.data);
-          
-          const deptoPuesto = await api.get('/departamentos');
-          if (deptoPuesto.data.success) {
-            setSelectedDepartamento(deptoPuesto.data.data.id_departamento);
-          }
+          const empleadoData = empleadoRes.data;
+          setEmpleado(empleadoData);
+          setSelectedDepartamento(empleadoData.id_departamento);
+
+          await fetchPuestosByDepartamento(empleadoData.id_departamento);
         } else {
           setError(empleadoRes.message || 'Error al cargar los datos del empleado');
+          return;
         }
 
         const [deptosResponse, rolesResponse] = await Promise.all([
@@ -76,38 +91,19 @@ const EditarEmpleado = () => {
     fetchData();
   }, [id]);
 
-  useEffect(() => {
-    const fetchPuestosByDepartamento = async () => {
-      if (selectedDepartamento) {
-        try {
-          const response = await api.get(`/puestos/departamento/${selectedDepartamento}`);
-          if (response.data.success) {
-            setPuestos(response.data.data);
-          }
-        } catch (error) {
-          console.error('Error al cargar puestos:', error);
-        }
-      } else {
-        setPuestos([]);
-      }
-    };
-
-    fetchPuestosByDepartamento();
-  }, [selectedDepartamento]);
 
   const handleDepartamentoChange = (e, setFieldValue) => {
     const departamentoId = e.target.value;
     setSelectedDepartamento(departamentoId);
     setFieldValue('id_departamento', departamentoId);
     setFieldValue('id_puesto', '');
-    setFieldValue('salario_actual', ''); // Limpiar salario al cambiar departamento
+    setFieldValue('salario_actual', '');
   };
 
   const handlePuestoChange = (e, setFieldValue) => {
     const puestoId = e.target.value;
     setFieldValue('id_puesto', puestoId);
-    
-    // Buscar el puesto seleccionado y establecer su salario_base formateado
+
     if (puestoId) {
       const puestoSeleccionado = puestos.find(p => p.id_puesto === parseInt(puestoId));
       if (puestoSeleccionado) {
@@ -123,14 +119,14 @@ const EditarEmpleado = () => {
     try {
       // Remover tipo_pago del objeto a enviar y convertir salario a número
       const { tipo_pago, ...empleadoData } = values;
-      
+
       // Convertir salario formateado de vuelta a número
       if (empleadoData.salario_actual && typeof empleadoData.salario_actual === 'string') {
         empleadoData.salario_actual = parseFloat(empleadoData.salario_actual.replace('Q', ''));
       }
-      
+
       const resultado = await updateEmpleado(id, empleadoData);
-      
+
       if (resultado.success) {
         navigate('/empleados');
       } else {
@@ -170,7 +166,7 @@ const EditarEmpleado = () => {
   return (
     <Container>
       <h1 className="mb-4">Editar Empleado</h1>
-      
+
       <Card>
         <Card.Body>
           <Formik
@@ -180,7 +176,7 @@ const EditarEmpleado = () => {
               direccion: empleado.direccion || '',
               telefono: empleado.telefono || '',
               email: empleado.email || '',
-              id_departamento: selectedDepartamento || '',
+              id_departamento: empleado.id_departamento || '',
               id_puesto: empleado.id_puesto || '',
               id_rol: empleado.id_rol || '',
               salario_actual: empleado.salario_actual ? `Q${Number(empleado.salario_actual).toFixed(2)}` : ''
@@ -204,7 +200,7 @@ const EditarEmpleado = () => {
                 {status && status.error && (
                   <Alert variant="danger">{status.error}</Alert>
                 )}
-                
+
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
@@ -219,7 +215,7 @@ const EditarEmpleado = () => {
                       </Form.Text>
                     </Form.Group>
                   </Col>
-                  
+
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>DPI</Form.Label>
@@ -234,7 +230,7 @@ const EditarEmpleado = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-                
+
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
@@ -252,7 +248,7 @@ const EditarEmpleado = () => {
                       </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
-                  
+
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Apellido</Form.Label>
@@ -270,7 +266,7 @@ const EditarEmpleado = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-                
+
                 <Form.Group className="mb-3">
                   <Form.Label>Dirección</Form.Label>
                   <Form.Control
@@ -285,7 +281,7 @@ const EditarEmpleado = () => {
                     {errors.direccion}
                   </Form.Control.Feedback>
                 </Form.Group>
-                
+
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
@@ -303,7 +299,7 @@ const EditarEmpleado = () => {
                       </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
-                  
+
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Correo Electrónico</Form.Label>
@@ -321,7 +317,7 @@ const EditarEmpleado = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-                
+
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
@@ -345,7 +341,7 @@ const EditarEmpleado = () => {
                       </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
-                  
+
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Puesto</Form.Label>
@@ -370,7 +366,7 @@ const EditarEmpleado = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-                
+
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
@@ -394,7 +390,7 @@ const EditarEmpleado = () => {
                       </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
-                  
+
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Salario</Form.Label>
@@ -417,7 +413,7 @@ const EditarEmpleado = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-                
+
                 <div className="d-flex justify-content-end gap-2">
                   <Button
                     variant="secondary"

@@ -549,12 +549,14 @@ CREATE PROCEDURE `sp_crear_empleado`(
     IN p_id_rol INT,
     IN p_fecha_contratacion DATE,
     IN p_salario_actual DECIMAL(10,2),
-    IN p_tipo_pago ENUM('SEMANAL', 'QUINCENAL', 'MENSUAL'),
     IN p_password VARCHAR(255),
     OUT p_resultado INT,
     OUT p_mensaje VARCHAR(255)
 )
 BEGIN
+	  DECLARE v_anios      INT;
+		  DECLARE v_meses      INT;
+		  DECLARE v_vacaciones INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -578,11 +580,11 @@ BEGIN
         INSERT INTO empleados (
             codigo_empleado, nombre, apellido, dpi, fecha_nacimiento, 
             direccion, telefono, email, id_puesto, id_rol, 
-            fecha_contratacion, salario_actual, tipo_pago, password
+            fecha_contratacion, salario_actual, password
         ) VALUES (
             p_codigo_empleado, p_nombre, p_apellido, p_dpi, p_fecha_nacimiento,
             p_direccion, p_telefono, p_email, p_id_puesto, p_id_rol,
-            p_fecha_contratacion, p_salario_actual, p_tipo_pago, p_password
+            p_fecha_contratacion, p_salario_actual, p_password
         );
         
         -- Registrar en histórico de salarios
@@ -593,10 +595,19 @@ BEGIN
         );
         
         -- Crear período vacacional inicial
+		  -- Cálculo de días de vacaciones según antigüedad
+	
+
+		  SET v_anios  = TIMESTAMPDIFF(YEAR, p_fecha_contratacion, CURDATE());
+		  SET v_meses  = TIMESTAMPDIFF(MONTH, p_fecha_contratacion, CURDATE()) - v_anios * 12;
+		  SET v_vacaciones = v_anios * 15 + FLOOR(v_meses * 1.25);
+		  IF v_vacaciones < 0 THEN
+			SET v_vacaciones = 0;
+		  END IF;
         INSERT INTO periodos_vacacionales (
             id_empleado, fecha_inicio, fecha_fin, dias_correspondientes, dias_tomados, dias_pendientes
         ) VALUES (
-            LAST_INSERT_ID(), p_fecha_contratacion, DATE_ADD(p_fecha_contratacion, INTERVAL 1 YEAR), 15, 0, 15
+            LAST_INSERT_ID(), p_fecha_contratacion, DATE_ADD(p_fecha_contratacion, INTERVAL 1 YEAR), v_vacaciones, 0, v_vacaciones
         );
         
         SET p_resultado = LAST_INSERT_ID();

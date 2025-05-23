@@ -34,7 +34,7 @@ class EmpleadoModel {
                e.dpi, e.fecha_nacimiento, e.direccion, e.telefono, 
                e.email, e.id_puesto, e.id_rol, e.fecha_contratacion, 
                e.fecha_fin_contrato, e.estado, e.salario_actual, 
-               p.nombre AS puesto, d.nombre AS departamento, 
+               p.nombre AS puesto, d.nombre AS departamento, d.id_departamento AS id_departamento, 
                r.nombre AS rol
         FROM empleados e
         JOIN puestos p ON e.id_puesto = p.id_puesto

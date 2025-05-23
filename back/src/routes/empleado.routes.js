@@ -16,7 +16,6 @@ const validarCrearEmpleado = [
   body('id_rol').isInt().withMessage('El ID de rol debe ser un número entero'),
   body('fecha_contratacion').isDate().withMessage('La fecha de contratación debe ser una fecha válida'),
   body('salario_actual').isFloat({ min: 0 }).withMessage('El salario debe ser un número positivo'),
-  body('tipo_pago').isIn(['SEMANAL', 'QUINCENAL', 'MENSUAL']).withMessage('El tipo de pago debe ser SEMANAL, QUINCENAL o MENSUAL'),
   body('password').isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
 ];
 
@@ -27,7 +26,6 @@ const validarActualizarEmpleado = [
   body('direccion').notEmpty().withMessage('La dirección es obligatoria'),
   body('id_puesto').isInt().withMessage('El ID de puesto debe ser un número entero'),
   body('id_rol').isInt().withMessage('El ID de rol debe ser un número entero'),
-  body('tipo_pago').isIn(['SEMANAL', 'QUINCENAL', 'MENSUAL']).withMessage('El tipo de pago debe ser SEMANAL, QUINCENAL o MENSUAL')
 ];
 
 // Validaciones para actualizar salario

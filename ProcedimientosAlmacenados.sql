@@ -481,7 +481,9 @@ sp_calcular_nomina_empleado: BEGIN
     CASE v_tipo_periodo
         WHEN 'MENSUAL' THEN SET v_salario_devengado = v_salario_base;
         WHEN 'QUINCENAL' THEN SET v_salario_devengado = v_salario_base / 2;
-        WHEN 'SEMANAL' THEN SET v_salario_devengado = v_salario_base / 4.33;
+        WHEN 'SEMANAL' THEN 
+			SELECT DATEDIFF(v_fecha_inicio, v_fecha_fin) AS dias_entre;
+			SET v_salario_devengado = (v_salario_base / 30) * dias_entre;
     END CASE;
     
     -- Calcular deducciones

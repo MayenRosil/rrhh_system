@@ -367,7 +367,7 @@ sp_calcular_nomina_empleado: BEGIN
     DECLARE v_fecha_inicio DATE;
     DECLARE v_fecha_fin DATE;
     DECLARE v_salario_base DECIMAL(10,2);
-    DECLARE v_horas_trabajadas DECIMAL(5,2) DEFAULT 0;
+    -- DECLARE v_horas_trabajadas DECIMAL(5,2) DEFAULT 0;
     DECLARE v_salario_devengado DECIMAL(10,2);
     DECLARE v_total_deducciones DECIMAL(10,2) DEFAULT 0;
     DECLARE v_total_bonificaciones DECIMAL(10,2) DEFAULT 0;
@@ -428,13 +428,14 @@ sp_calcular_nomina_empleado: BEGIN
     END IF;
     
     -- Obtener total de horas trabajadas en el período
+    /*
     SELECT COALESCE(SUM(horas_trabajadas), 0) 
     INTO v_horas_trabajadas
     FROM marcajes 
     WHERE id_empleado = p_id_empleado 
     AND fecha BETWEEN v_fecha_inicio AND v_fecha_fin
     AND estado = 'APROBADO';
-    
+    */
     -- Obtener parámetros del sistema (tasas de IGSS, ISR y Bonificación Incentivo)
     SELECT valor INTO v_tasa_igss
     FROM parametros_sistema
@@ -501,7 +502,7 @@ sp_calcular_nomina_empleado: BEGIN
     CASE v_tipo_periodo
         WHEN 'MENSUAL' THEN SET v_total_bonificaciones = v_bonificacion_incentivo;
         WHEN 'QUINCENAL' THEN SET v_total_bonificaciones = v_bonificacion_incentivo / 2;
-        WHEN 'SEMANAL' THEN SET v_total_bonificaciones = v_bonificacion_incentivo / 4.33;
+        WHEN 'SEMANAL' THEN SET v_total_bonificaciones = (v_bonificacion_incentivo / 30) * dias_entre;
     END CASE;
     
     -- Calcular sueldo líquido
@@ -512,7 +513,7 @@ sp_calcular_nomina_empleado: BEGIN
         id_periodo, id_empleado, salario_base, horas_trabajadas,
         salario_devengado, total_deducciones, total_bonificaciones, sueldo_liquido
     ) VALUES (
-        p_id_periodo, p_id_empleado, v_salario_base, v_horas_trabajadas,
+        p_id_periodo, p_id_empleado, v_salario_base, 8,
         v_salario_devengado, v_total_deducciones, v_total_bonificaciones, v_sueldo_liquido
     );
     

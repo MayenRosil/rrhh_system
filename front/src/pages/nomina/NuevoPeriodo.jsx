@@ -1,56 +1,105 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Card, Alert, Row, Col } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-import moment from 'moment';
+
 import { crearPeriodo } from '../../services/nominaService';
+import moment from 'moment';
+import 'moment/locale/es';
+moment.locale('es');
 
 const validationSchema = Yup.object().shape({
-  tipo: Yup.string()
-    .required('El tipo de período es obligatorio'),
-  fecha_inicio: Yup.date()
-    .required('La fecha de inicio es obligatoria'),
+  tipo: Yup.string().required('El tipo de período es obligatorio'),
+  fecha_inicio: Yup.date().required('La fecha de inicio es obligatoria'),
   fecha_fin: Yup.date()
     .required('La fecha de fin es obligatoria')
-    .min(
-      Yup.ref('fecha_inicio'),
-      'La fecha de fin debe ser posterior a la fecha de inicio'
-    )
+    .min(Yup.ref('fecha_inicio'), 'La fecha de fin debe ser posterior a la fecha de inicio')
 });
+
+const generarSemanasDelMes = (mes, anio) => {
+  const semanas = [];
+  const fecha = moment(`${anio}-${mes}-01`, 'YYYY-MM-DD');
+  const finMes = fecha.clone().endOf('month');
+  const hoy = moment();
+
+  for (let i = 0; i < 5; i++) {
+    const inicio = fecha.clone().add(i * 7, 'days');
+    if (inicio.isAfter(finMes)) break;
+    const fin = moment.min(inicio.clone().add(6, 'days'), finMes);
+
+    if (
+      anio === hoy.year() &&
+      parseInt(mes) === hoy.month() + 1 &&
+      inicio.isAfter(hoy)
+    ) {
+      continue;
+    }
+
+    semanas.push({
+      label: `${inicio.format('D')} al ${fin.format('D')}`,
+      fecha_inicio: inicio.format('YYYY-MM-DD'),
+      fecha_fin: fin.format('YYYY-MM-DD')
+    });
+  }
+
+  return semanas;
+};
+
+
 
 const NuevoPeriodo = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
 
-  const generarFechas = (tipo, fechaInicio) => {
-    let fechaFin;
-    
-    if (!fechaInicio) return null;
-    
-    const inicio = moment(fechaInicio);
-    
-    switch (tipo) {
-      case 'SEMANAL':
-        fechaFin = inicio.clone().add(6, 'days');
-        break;
-      case 'QUINCENAL':
-        fechaFin = inicio.clone().add(14, 'days');
-        break;
-      case 'MENSUAL':
-        fechaFin = inicio.clone().add(1, 'month').subtract(1, 'day');
-        break;
-      default:
-        return null;
-    }
-    
-    return fechaFin.format('YYYY-MM-DD');
+  const [anioSeleccionado, setAnioSeleccionado] = useState(moment().year());
+  const [mesSeleccionado, setMesSeleccionado] = useState('');
+  const [semanas, setSemanas] = useState([]);
+
+  const aniosDisponibles = [];
+  const anioActual = moment().year();
+  for (let i = anioActual; i >= 2000; i--) {
+    aniosDisponibles.push(i);
+  }
+
+  const obtenerMesesDisponibles = (anio) => {
+    const mesLimite = anio === moment().year() ? moment().month() : 11;
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return meses.map((mes, idx) => ({
+      label: mes,
+      value: String(idx + 1).padStart(2, '0')
+    })).filter((_, idx) => idx <= mesLimite);
   };
+
+  const mesesDisponibles = obtenerMesesDisponibles(anioSeleccionado);
+
+  const generarPeriodoMensual = (anio, mes) => {
+    const inicio = moment(`${anio}-${mes}-01`);
+    const fin = inicio.clone().endOf('month');
+    return {
+      fecha_inicio: inicio.format('YYYY-MM-DD'),
+      fecha_fin: fin.format('YYYY-MM-DD')
+    };
+  };
+
+  const generarPeriodoQuincenal = (anio, mes, quincena) => {
+    const inicio = moment(`${anio}-${mes}-${quincena === 'primera' ? '01' : '16'}`);
+    const fin = quincena === 'primera'
+      ? moment(`${anio}-${mes}-15`)
+      : inicio.clone().endOf('month');
+    return {
+      fecha_inicio: inicio.format('YYYY-MM-DD'),
+      fecha_fin: fin.format('YYYY-MM-DD')
+    };
+  };
+
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     try {
       const resultado = await crearPeriodo(values);
-      
       if (resultado.success) {
         navigate('/nomina/periodos');
       } else {
@@ -67,11 +116,9 @@ const NuevoPeriodo = () => {
   return (
     <Container>
       <h1 className="mb-4">Nuevo Período de Nómina</h1>
-      
-      {error && (
-        <Alert variant="danger">{error}</Alert>
-      )}
-      
+
+      {error && <Alert variant="danger">{error}</Alert>}
+
       <Card>
         <Card.Body>
           <Formik
@@ -98,7 +145,7 @@ const NuevoPeriodo = () => {
                 {status && status.error && (
                   <Alert variant="danger">{status.error}</Alert>
                 )}
-                
+
                 <Form.Group className="mb-3">
                   <Form.Label>Tipo de Período</Form.Label>
                   <Form.Select
@@ -106,9 +153,15 @@ const NuevoPeriodo = () => {
                     value={values.tipo}
                     onChange={(e) => {
                       handleChange(e);
-                      const nuevaFechaFin = generarFechas(e.target.value, values.fecha_inicio);
-                      if (nuevaFechaFin) {
-                        setFieldValue('fecha_fin', nuevaFechaFin);
+                      const tipo = e.target.value;
+                      if (tipo !== 'SEMANAL') {
+                        setFieldValue('fecha_inicio', moment().format('YYYY-MM-DD'));
+                        setFieldValue(
+                          'fecha_fin',
+                          tipo === 'QUINCENAL'
+                            ? moment().add(14, 'days').format('YYYY-MM-DD')
+                            : moment().add(1, 'month').subtract(1, 'day').format('YYYY-MM-DD')
+                        );
                       }
                     }}
                     onBlur={handleBlur}
@@ -122,49 +175,187 @@ const NuevoPeriodo = () => {
                     {errors.tipo}
                   </Form.Control.Feedback>
                 </Form.Group>
-                
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Fecha de Inicio</Form.Label>
-                      <Form.Control
-                        type="date"
-                        name="fecha_inicio"
-                        value={values.fecha_inicio}
-                        onChange={(e) => {
-                          handleChange(e);
-                          const nuevaFechaFin = generarFechas(values.tipo, e.target.value);
-                          if (nuevaFechaFin) {
-                            setFieldValue('fecha_fin', nuevaFechaFin);
-                          }
-                        }}
-                        onBlur={handleBlur}
-                        isInvalid={touched.fecha_inicio && errors.fecha_inicio}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {errors.fecha_inicio}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                  
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Fecha de Fin</Form.Label>
-                      <Form.Control
-                        type="date"
-                        name="fecha_fin"
-                        value={values.fecha_fin}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        isInvalid={touched.fecha_fin && errors.fecha_fin}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {errors.fecha_fin}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                
+
+                {(values.tipo === 'MENSUAL' || values.tipo === 'QUINCENAL') && (
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Año</Form.Label>
+                        <Form.Select
+                          value={anioSeleccionado}
+                          onChange={(e) => {
+                            const nuevoAnio = parseInt(e.target.value, 10);
+                            setAnioSeleccionado(nuevoAnio);
+                            setMesSeleccionado('');
+                            setFieldValue('fecha_inicio', '');
+                            setFieldValue('fecha_fin', '');
+                          }}
+                        >
+                          <option value="">Selecciona un año</option>
+                          {aniosDisponibles.map((anio) => (
+                            <option key={anio} value={anio}>{anio}</option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Mes</Form.Label>
+                        <Form.Select
+                          value={mesSeleccionado}
+                          onChange={(e) => {
+                            const mes = e.target.value;
+                            setMesSeleccionado(mes);
+
+                            if (values.tipo === 'MENSUAL') {
+                              const { fecha_inicio, fecha_fin } = generarPeriodoMensual(anioSeleccionado, mes);
+                              setFieldValue('fecha_inicio', fecha_inicio);
+                              setFieldValue('fecha_fin', fecha_fin);
+                            } else if (values.tipo === 'QUINCENAL') {
+                              setFieldValue('fecha_inicio', '');
+                              setFieldValue('fecha_fin', '');
+                            }
+                          }}
+                        >
+                          <option value="">Selecciona un mes</option>
+                          {mesesDisponibles.map((m) => (
+                            <option key={m.value} value={m.value}>{m.label}</option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    {values.tipo === 'QUINCENAL' && mesSeleccionado && (
+                      <Col md={12}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Quincena</Form.Label>
+                          <div className="d-flex gap-2">
+                            <Button
+                              variant={
+                                values.fecha_inicio && moment(values.fecha_inicio).date() === 1
+                                  ? 'primary' : 'outline-secondary'
+                              }
+                              onClick={() => {
+                                const { fecha_inicio, fecha_fin } =
+                                  generarPeriodoQuincenal(anioSeleccionado, mesSeleccionado, 'primera');
+                                setFieldValue('fecha_inicio', fecha_inicio);
+                                setFieldValue('fecha_fin', fecha_fin);
+                              }}
+                            >
+                              Primera (1 - 15)
+                            </Button>
+
+                            <Button
+                              variant={
+                                values.fecha_inicio && moment(values.fecha_inicio).date() === 16
+                                  ? 'primary' : 'outline-secondary'
+                              }
+                              onClick={() => {
+                                const { fecha_inicio, fecha_fin } =
+                                  generarPeriodoQuincenal(anioSeleccionado, mesSeleccionado, 'segunda');
+                                setFieldValue('fecha_inicio', fecha_inicio);
+                                setFieldValue('fecha_fin', fecha_fin);
+                              }}
+                            >
+                              Segunda (16 - fin de mes)
+                            </Button>
+                          </div>
+                        </Form.Group>
+                      </Col>
+                    )}
+                  </Row>
+                )}
+
+
+                {values.tipo === 'SEMANAL' && (
+                  <>
+                    <Row>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Año</Form.Label>
+                          <Form.Select
+                            value={anioSeleccionado}
+                            onChange={(e) => {
+                              const nuevoAnio = parseInt(e.target.value, 10);
+                              setAnioSeleccionado(nuevoAnio);
+                              setMesSeleccionado('');
+                              setFieldValue('fecha_inicio', '');
+                              setFieldValue('fecha_fin', '');
+                              setSemanas([]);
+                            }}
+                          >
+                            <option value="">Selecciona un año</option>
+                            {aniosDisponibles.map((anio) => (
+                              <option key={anio} value={anio}>{anio}</option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Mes</Form.Label>
+                          <Form.Select
+                            value={mesSeleccionado}
+                            onChange={(e) => {
+                              const mes = e.target.value;
+                              setMesSeleccionado(mes);
+                              const semanasGeneradas = generarSemanasDelMes(mes, anioSeleccionado);
+                              setSemanas(semanasGeneradas);
+                              setFieldValue('fecha_inicio', '');
+                              setFieldValue('fecha_fin', '');
+                            }}
+                            disabled={!anioSeleccionado}
+                          >
+                            <option value="">Selecciona un mes</option>
+                            {mesesDisponibles.map((m) => (
+                              <option key={m.value} value={m.value}>
+                                {m.label}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+
+
+                      {mesSeleccionado && (
+                        <Col md={12}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Semana</Form.Label>
+                            <div className="d-flex flex-wrap gap-2 mt-2">
+                              {semanas.map((s, idx) => {
+                                const isSelected =
+                                  values.fecha_inicio === s.fecha_inicio &&
+                                  values.fecha_fin === s.fecha_fin;
+                                return (
+                                  <Button
+                                    key={idx}
+                                    variant={isSelected ? 'primary' : 'outline-secondary'}
+                                    onClick={() => {
+                                      setFieldValue('fecha_inicio', s.fecha_inicio);
+                                      setFieldValue('fecha_fin', s.fecha_fin);
+                                    }}
+                                    className="text-start"
+                                  >
+                                    <div>
+                                      <strong>Semana {idx + 1}</strong>
+                                      <br />
+                                      <small>
+                                        {moment(s.fecha_inicio).format('DD-MM-YY')} al {moment(s.fecha_fin).format('DD-MM-YY')}
+                                      </small>
+                                    </div>
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      )}
+                    </Row>
+                  </>
+                )}
+
                 <div className="d-flex justify-content-end gap-2">
                   <Button
                     variant="secondary"

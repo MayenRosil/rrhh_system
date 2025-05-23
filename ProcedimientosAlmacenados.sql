@@ -355,6 +355,8 @@ END //
 
 -- -----------------------------------------------------------------
 
+DELIMITER //
+
 CREATE PROCEDURE `sp_calcular_nomina_empleado`(
     IN p_id_empleado INT,
     IN p_id_periodo INT,
@@ -367,7 +369,7 @@ sp_calcular_nomina_empleado: BEGIN
     DECLARE v_fecha_inicio DATE;
     DECLARE v_fecha_fin DATE;
     DECLARE v_salario_base DECIMAL(10,2);
-    -- DECLARE v_horas_trabajadas DECIMAL(5,2) DEFAULT 0;
+    DECLARE dias_entre INT;
     DECLARE v_salario_devengado DECIMAL(10,2);
     DECLARE v_total_deducciones DECIMAL(10,2) DEFAULT 0;
     DECLARE v_total_bonificaciones DECIMAL(10,2) DEFAULT 0;
@@ -381,134 +383,129 @@ sp_calcular_nomina_empleado: BEGIN
     DECLARE v_id_tipo_deduccion_igss INT;
     DECLARE v_id_tipo_deduccion_isr INT;
     DECLARE v_id_tipo_bonificacion_incentivo INT;
-    
+
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
         SET p_resultado = FALSE;
         SET p_mensaje = 'Error al calcular la nómina';
     END;
-    
+
     START TRANSACTION;
-    
+
     -- Obtener información del período
     SELECT tipo, fecha_inicio, fecha_fin 
     INTO v_tipo_periodo, v_fecha_inicio, v_fecha_fin
     FROM periodos_nomina 
     WHERE id_periodo = p_id_periodo;
-    
+
     IF v_tipo_periodo IS NULL THEN
         SET p_resultado = FALSE;
         SET p_mensaje = 'No existe el período de nómina indicado';
         ROLLBACK;
         LEAVE sp_calcular_nomina_empleado;
     END IF;
-    
+
     -- Obtener información del empleado
     SELECT salario_actual 
     INTO v_salario_base
     FROM empleados 
     WHERE id_empleado = p_id_empleado AND estado = 'ACTIVO';
-    
 
-    
+    IF v_salario_base IS NULL THEN
+        SET p_resultado = FALSE;
+        SET p_mensaje = 'No se encontró el salario del empleado o el empleado no está activo';
+        ROLLBACK;
+        LEAVE sp_calcular_nomina_empleado;
+    END IF;
 
-    
-    -- Verificar si ya existe una nómina calculada para este empleado en este período
+    -- Verificar si ya existe una nómina calculada
     SELECT EXISTS (
         SELECT 1 FROM nominas 
         WHERE id_empleado = p_id_empleado AND id_periodo = p_id_periodo
     ) INTO v_ya_calculado;
-    
+
     IF v_ya_calculado THEN
         SET p_resultado = FALSE;
         SET p_mensaje = 'Ya existe una nómina calculada para este empleado en este período';
         ROLLBACK;
         LEAVE sp_calcular_nomina_empleado;
     END IF;
-    
-    -- Obtener total de horas trabajadas en el período
-    /*
-    SELECT COALESCE(SUM(horas_trabajadas), 0) 
-    INTO v_horas_trabajadas
-    FROM marcajes 
-    WHERE id_empleado = p_id_empleado 
-    AND fecha BETWEEN v_fecha_inicio AND v_fecha_fin
-    AND estado = 'APROBADO';
-    */
-    -- Obtener parámetros del sistema (tasas de IGSS, ISR y Bonificación Incentivo)
+
+    -- Obtener parámetros del sistema
     SELECT valor INTO v_tasa_igss
     FROM parametros_sistema
     WHERE nombre = 'TASA_IGSS' AND activo = TRUE
     ORDER BY fecha_inicio DESC
     LIMIT 1;
-    
+
     SELECT valor INTO v_tasa_isr
     FROM parametros_sistema
     WHERE nombre = 'TASA_ISR' AND activo = TRUE
     ORDER BY fecha_inicio DESC
     LIMIT 1;
-    
+
     SELECT valor INTO v_bonificacion_incentivo
     FROM parametros_sistema
     WHERE nombre = 'BONIFICACION_INCENTIVO' AND activo = TRUE
     ORDER BY fecha_inicio DESC
     LIMIT 1;
-    
+
     IF v_tasa_igss IS NULL OR v_tasa_isr IS NULL OR v_bonificacion_incentivo IS NULL THEN
         SET p_resultado = FALSE;
         SET p_mensaje = 'No se encontraron todos los parámetros necesarios para el cálculo';
         ROLLBACK;
         LEAVE sp_calcular_nomina_empleado;
     END IF;
-    
-    -- Obtener IDs de los tipos de deducciones y bonificaciones
+
+    -- Obtener IDs de deducciones y bonificaciones
     SELECT id_tipo_deduccion INTO v_id_tipo_deduccion_igss
     FROM tipos_deducciones
     WHERE nombre = 'IGSS' AND activo = TRUE
     LIMIT 1;
-    
+
     SELECT id_tipo_deduccion INTO v_id_tipo_deduccion_isr
     FROM tipos_deducciones
     WHERE nombre = 'ISR' AND activo = TRUE
     LIMIT 1;
-    
+
     SELECT id_tipo_bonificacion INTO v_id_tipo_bonificacion_incentivo
     FROM tipos_bonificaciones
     WHERE nombre = 'BONIFICACION_INCENTIVO' AND activo = TRUE
     LIMIT 1;
-    
-    -- Calcular salario devengado según el tipo de período
+
+    -- Calcular días del período
+    SET dias_entre = DATEDIFF(v_fecha_fin, v_fecha_inicio) + 1;
+
+    -- Calcular salario devengado
     CASE v_tipo_periodo
-        WHEN 'MENSUAL' THEN SET v_salario_devengado = v_salario_base;
-        WHEN 'QUINCENAL' THEN SET v_salario_devengado = v_salario_base / 2;
+        WHEN 'MENSUAL' THEN 
+            SET v_salario_devengado = v_salario_base;
+        WHEN 'QUINCENAL' THEN 
+            SET v_salario_devengado = v_salario_base / 2;
         WHEN 'SEMANAL' THEN 
-			SELECT DATEDIFF(v_fecha_inicio, v_fecha_fin) AS dias_entre;
-			SET v_salario_devengado = (v_salario_base / 30) * dias_entre;
+            SET v_salario_devengado = (v_salario_base / 30) * dias_entre;
     END CASE;
-    
+
     -- Calcular deducciones
-    -- IGSS (4.83% del salario)
     SET v_monto_igss = v_salario_devengado * v_tasa_igss;
-    
-    -- ISR (se simplifica, en realidad es más complejo con rangos)
-    -- Para este ejemplo, asumimos un % fijo del salario anual proyectado
     SET v_monto_isr = v_salario_devengado * v_tasa_isr;
-    
-    -- Sumar deducciones
     SET v_total_deducciones = v_monto_igss + v_monto_isr;
-    
-    -- Bonificación incentivo (actualmente Q250.00 mensuales)
+
+    -- Calcular bonificaciones
     CASE v_tipo_periodo
-        WHEN 'MENSUAL' THEN SET v_total_bonificaciones = v_bonificacion_incentivo;
-        WHEN 'QUINCENAL' THEN SET v_total_bonificaciones = v_bonificacion_incentivo / 2;
-        WHEN 'SEMANAL' THEN SET v_total_bonificaciones = (v_bonificacion_incentivo / 30) * dias_entre;
+        WHEN 'MENSUAL' THEN 
+            SET v_total_bonificaciones = v_bonificacion_incentivo;
+        WHEN 'QUINCENAL' THEN 
+            SET v_total_bonificaciones = v_bonificacion_incentivo / 2;
+        WHEN 'SEMANAL' THEN 
+            SET v_total_bonificaciones = (v_bonificacion_incentivo / 30) * dias_entre;
     END CASE;
-    
+
     -- Calcular sueldo líquido
     SET v_sueldo_liquido = v_salario_devengado - v_total_deducciones + v_total_bonificaciones;
-    
-    -- Insertar la nómina
+
+    -- Insertar nómina
     INSERT INTO nominas (
         id_periodo, id_empleado, salario_base, horas_trabajadas,
         salario_devengado, total_deducciones, total_bonificaciones, sueldo_liquido
@@ -516,24 +513,24 @@ sp_calcular_nomina_empleado: BEGIN
         p_id_periodo, p_id_empleado, v_salario_base, 8,
         v_salario_devengado, v_total_deducciones, v_total_bonificaciones, v_sueldo_liquido
     );
-    
+
     SET p_id_nomina = LAST_INSERT_ID();
-    
-    -- Insertar detalle de deducciones
+
+    -- Insertar deducciones
     INSERT INTO deducciones_nomina (id_nomina, id_tipo_deduccion, monto)
-    VALUES (p_id_nomina, v_id_tipo_deduccion_igss, v_monto_igss);
-    
-    INSERT INTO deducciones_nomina (id_nomina, id_tipo_deduccion, monto)
-    VALUES (p_id_nomina, v_id_tipo_deduccion_isr, v_monto_isr);
-    
-    -- Insertar detalle de bonificaciones
+    VALUES (p_id_nomina, v_id_tipo_deduccion_igss, v_monto_igss),
+           (p_id_nomina, v_id_tipo_deduccion_isr, v_monto_isr);
+
+    -- Insertar bonificaciones
     INSERT INTO bonificaciones_nomina (id_nomina, id_tipo_bonificacion, monto)
     VALUES (p_id_nomina, v_id_tipo_bonificacion_incentivo, v_total_bonificaciones);
-    
+
     SET p_resultado = TRUE;
     SET p_mensaje = 'Nómina calculada exitosamente';
     COMMIT;
 END //
+
+
 
 -- -----------------------------------------------------------------
 

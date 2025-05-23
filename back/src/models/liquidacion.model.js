@@ -148,11 +148,17 @@ class LiquidacionModel {
   async pagarLiquidacion(idLiquidacion, fechaPago, observaciones) {
     try {
       const result = await db.query(`
-        UPDATE liquidaciones
+        UPDATE liquidaciones AS l
+        JOIN empleados AS e ON l.id_empleado = e.id_empleado
         SET 
-          estado = 'PAGADO',
-          fecha_pago = ?,
-          observaciones = ?
+          l.estado = 'PAGADO',
+          l.fecha_pago = ?,
+          l.observaciones = ?,
+          e.estado = CASE 
+              WHEN l.motivo = 'DESPIDO_JUSTIFICADO' OR l.motivo = 'DESPIDO_INJUSTIFICADO' THEN 'DESPEDIDO'
+              WHEN l.motivo = 'RENUNCIA' THEN 'RENUNCIA'
+              ELSE 'INACTIVO'
+          END
         WHERE id_liquidacion = ?
       `, [fechaPago, observaciones, idLiquidacion]);
       

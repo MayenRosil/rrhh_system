@@ -22,8 +22,8 @@ const validationSchema = Yup.object().shape({
     .required('El puesto es obligatorio'),
   id_rol: Yup.number()
     .required('El rol es obligatorio'),
-  tipo_pago: Yup.string()
-    .required('El tipo de pago es obligatorio')
+  salario_actual: Yup.string()
+    .required('El salario es obligatorio')
 });
 
 const EditarEmpleado = () => {
@@ -40,22 +40,19 @@ const EditarEmpleado = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Obtener datos del empleado
         const empleadoRes = await getEmpleadoById(id);
         
         if (empleadoRes.success) {
           setEmpleado(empleadoRes.data);
           
-          // Obtener departamento del puesto actual
-          const deptoPuesto = await api.get(`/puestos/${empleadoRes.data.id_puesto}`);
+          const deptoPuesto = await api.get('/departamentos');
           if (deptoPuesto.data.success) {
             setSelectedDepartamento(deptoPuesto.data.data.id_departamento);
           }
         } else {
           setError(empleadoRes.message || 'Error al cargar los datos del empleado');
         }
-        
-        // Obtener catálogos necesarios
+
         const [deptosResponse, rolesResponse] = await Promise.all([
           api.get('/departamentos'),
           api.get('/auth/roles')
@@ -103,11 +100,36 @@ const EditarEmpleado = () => {
     setSelectedDepartamento(departamentoId);
     setFieldValue('id_departamento', departamentoId);
     setFieldValue('id_puesto', '');
+    setFieldValue('salario_actual', ''); // Limpiar salario al cambiar departamento
+  };
+
+  const handlePuestoChange = (e, setFieldValue) => {
+    const puestoId = e.target.value;
+    setFieldValue('id_puesto', puestoId);
+    
+    // Buscar el puesto seleccionado y establecer su salario_base formateado
+    if (puestoId) {
+      const puestoSeleccionado = puestos.find(p => p.id_puesto === parseInt(puestoId));
+      if (puestoSeleccionado) {
+        const salarioFormateado = `Q${Number(puestoSeleccionado.salario_base).toFixed(2)}`;
+        setFieldValue('salario_actual', salarioFormateado);
+      }
+    } else {
+      setFieldValue('salario_actual', '');
+    }
   };
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     try {
-      const resultado = await updateEmpleado(id, values);
+      // Remover tipo_pago del objeto a enviar y convertir salario a número
+      const { tipo_pago, ...empleadoData } = values;
+      
+      // Convertir salario formateado de vuelta a número
+      if (empleadoData.salario_actual && typeof empleadoData.salario_actual === 'string') {
+        empleadoData.salario_actual = parseFloat(empleadoData.salario_actual.replace('Q', ''));
+      }
+      
+      const resultado = await updateEmpleado(id, empleadoData);
       
       if (resultado.success) {
         navigate('/empleados');
@@ -161,7 +183,7 @@ const EditarEmpleado = () => {
               id_departamento: selectedDepartamento || '',
               id_puesto: empleado.id_puesto || '',
               id_rol: empleado.id_rol || '',
-              tipo_pago: empleado.tipo_pago || 'QUINCENAL'
+              salario_actual: empleado.salario_actual ? `Q${Number(empleado.salario_actual).toFixed(2)}` : ''
             }}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
@@ -330,7 +352,7 @@ const EditarEmpleado = () => {
                       <Form.Select
                         name="id_puesto"
                         value={values.id_puesto}
-                        onChange={handleChange}
+                        onChange={(e) => handlePuestoChange(e, setFieldValue)}
                         onBlur={handleBlur}
                         isInvalid={touched.id_puesto && errors.id_puesto}
                         disabled={!selectedDepartamento}
@@ -338,7 +360,7 @@ const EditarEmpleado = () => {
                         <option value="">Seleccione...</option>
                         {puestos.map((puesto) => (
                           <option key={puesto.id_puesto} value={puesto.id_puesto}>
-                            {puesto.nombre}
+                            {puesto.nombre} - Q{Number(puesto.salario_base).toFixed(2)}
                           </option>
                         ))}
                       </Form.Select>
@@ -375,21 +397,23 @@ const EditarEmpleado = () => {
                   
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Tipo de Pago</Form.Label>
-                      <Form.Select
-                        name="tipo_pago"
-                        value={values.tipo_pago}
+                      <Form.Label>Salario</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="salario_actual"
+                        value={values.salario_actual}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        isInvalid={touched.tipo_pago && errors.tipo_pago}
-                      >
-                        <option value="SEMANAL">Semanal</option>
-                        <option value="QUINCENAL">Quincenal</option>
-                        <option value="MENSUAL">Mensual</option>
-                      </Form.Select>
+                        isInvalid={touched.salario_actual && errors.salario_actual}
+                        readOnly
+                        style={{ backgroundColor: '#f8f9fa' }}
+                      />
                       <Form.Control.Feedback type="invalid">
-                        {errors.tipo_pago}
+                        {errors.salario_actual}
                       </Form.Control.Feedback>
+                      <Form.Text className="text-muted">
+                        El salario se establece automáticamente según el puesto seleccionado.
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>

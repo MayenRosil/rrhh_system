@@ -35,8 +35,6 @@ const validationSchema = Yup.object().shape({
   salario_actual: Yup.number()
     .required('El salario es obligatorio')
     .min(0, 'El salario debe ser un número positivo'),
-  tipo_pago: Yup.string()
-    .required('El tipo de pago es obligatorio'),
   password: Yup.string()
     .required('La contraseña es obligatoria')
     .min(6, 'La contraseña debe tener al menos 6 caracteres'),
@@ -104,11 +102,26 @@ const NuevoEmpleado = () => {
     setSelectedDepartamento(departamentoId);
     setFieldValue('id_departamento', departamentoId);
     setFieldValue('id_puesto', '');
+    setFieldValue('salario_actual', '');
+  };
+
+  const handlePuestoChange = (e, setFieldValue) => {
+    const puestoId = e.target.value;
+    setFieldValue('id_puesto', puestoId);
+    
+    if (puestoId) {
+      const puestoSeleccionado = puestos.find(p => p.id_puesto === parseInt(puestoId));
+      if (puestoSeleccionado) {
+        setFieldValue('salario_actual', parseFloat(puestoSeleccionado.salario_base));
+      }
+    } else {
+      setFieldValue('salario_actual', '');
+    }
   };
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     try {
-      const { confirmPassword, ...empleadoData } = values;
+      const { confirmPassword, tipo_pago, ...empleadoData } = values;
       const resultado = await createEmpleado(empleadoData);
       
       if (resultado.success) {
@@ -159,7 +172,6 @@ const NuevoEmpleado = () => {
               id_rol: '',
               fecha_contratacion: new Date().toISOString().split('T')[0],
               salario_actual: '',
-              tipo_pago: 'QUINCENAL',
               password: '',
               confirmPassword: ''
             }}
@@ -371,7 +383,7 @@ const NuevoEmpleado = () => {
                       <Form.Select
                         name="id_puesto"
                         value={values.id_puesto}
-                        onChange={handleChange}
+                        onChange={(e) => handlePuestoChange(e, setFieldValue)}
                         onBlur={handleBlur}
                         isInvalid={touched.id_puesto && errors.id_puesto}
                         disabled={!selectedDepartamento}
@@ -391,7 +403,7 @@ const NuevoEmpleado = () => {
                 </Row>
                 
                 <Row>
-                  <Col md={4}>
+                  <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Rol</Form.Label>
                       <Form.Select
@@ -414,7 +426,7 @@ const NuevoEmpleado = () => {
                     </Form.Group>
                   </Col>
                   
-                  <Col md={4}>
+                  <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Salario</Form.Label>
                       <Form.Control
@@ -424,30 +436,15 @@ const NuevoEmpleado = () => {
                         onChange={handleChange}
                         onBlur={handleBlur}
                         isInvalid={touched.salario_actual && errors.salario_actual}
+                        readOnly
+                        style={{ backgroundColor: '#f8f9fa' }}
                       />
                       <Form.Control.Feedback type="invalid">
                         {errors.salario_actual}
                       </Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-                  
-                  <Col md={4}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Tipo de Pago</Form.Label>
-                      <Form.Select
-                        name="tipo_pago"
-                        value={values.tipo_pago}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        isInvalid={touched.tipo_pago && errors.tipo_pago}
-                      >
-                        <option value="SEMANAL">Semanal</option>
-                        <option value="QUINCENAL">Quincenal</option>
-                        <option value="MENSUAL">Mensual</option>
-                      </Form.Select>
-                      <Form.Control.Feedback type="invalid">
-                        {errors.tipo_pago}
-                      </Form.Control.Feedback>
+                      <Form.Text className="text-muted">
+                        El salario se establece automáticamente según el puesto seleccionado.
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>

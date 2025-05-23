@@ -130,17 +130,7 @@ const ListaEmpleados = () => {
                     </Button>
                     
                     {empleado.estado === 'ACTIVO' && (
-                      <>
-                        <Button
-                          variant="outline-success"
-                          size="sm"
-                          as={Link}
-                          to={`/empleados/${empleado.id_empleado}/salario`}
-                          title="Actualizar Salario"
-                        >
-                          <FaMoneyBillWave />
-                        </Button>
-                        
+                      <>       
                         <Button
                           variant="outline-danger"
                           size="sm"

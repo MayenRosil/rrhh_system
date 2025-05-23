@@ -47,7 +47,7 @@ INSERT INTO tipos_bonificaciones (nombre, descripcion, es_porcentaje, valor_defa
 CALL sp_crear_empleado(
     'EMP001', 'Admin', 'Sistema', '1234567890101', '1990-01-01',
     'Ciudad de Guatemala', '55551234', 'admin@empresa.com',
-    1, 1, '2017-01-01', 15000.00, 'QUINCENAL', '$2a$12$N0L0gW1aScFmDGPZTQUG1uCSTWCaIPeUHee4pMkSKuCp81z.Kzs6e',
+    1, 1, '2017-01-01', 15000.00, '$2a$12$N0L0gW1aScFmDGPZTQUG1uCSTWCaIPeUHee4pMkSKuCp81z.Kzs6e',
     @id_resultado, @mensaje
 );
 

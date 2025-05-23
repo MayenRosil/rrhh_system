@@ -42,11 +42,11 @@ const Header = () => {
                   <NavDropdown.Item as={Link} to="/liquidaciones/nueva">Nueva Liquidación</NavDropdown.Item>
                 </NavDropdown>
                 
-                <NavDropdown title="Reportes" id="reportes-dropdown">
+                {/* <NavDropdown title="Reportes" id="reportes-dropdown">
                   <NavDropdown.Item as={Link} to="/reportes/nomina">Reporte de Nómina</NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/reportes/marcajes">Reporte de Marcajes</NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/reportes/vacaciones">Reporte de Vacaciones</NavDropdown.Item>
-                </NavDropdown>
+                </NavDropdown> */}
               </>
             )}
             

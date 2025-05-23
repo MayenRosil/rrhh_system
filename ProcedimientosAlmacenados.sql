@@ -14,7 +14,6 @@ CREATE PROCEDURE `sp_actualizar_empleado`(
     IN p_email VARCHAR(100),
     IN p_id_puesto INT,
     IN p_id_rol INT,
-    IN p_tipo_pago ENUM('SEMANAL', 'QUINCENAL', 'MENSUAL'),
     OUT p_resultado BOOLEAN,
     OUT p_mensaje VARCHAR(255)
 )
@@ -42,8 +41,7 @@ BEGIN
             telefono = p_telefono,
             email = p_email,
             id_puesto = p_id_puesto,
-            id_rol = p_id_rol,
-            tipo_pago = p_tipo_pago
+            id_rol = p_id_rol
         WHERE id_empleado = p_id_empleado;
         
         SET p_resultado = TRUE;
@@ -368,7 +366,6 @@ sp_calcular_nomina_empleado: BEGIN
     DECLARE v_tipo_periodo ENUM('SEMANAL', 'QUINCENAL', 'MENSUAL');
     DECLARE v_fecha_inicio DATE;
     DECLARE v_fecha_fin DATE;
-    DECLARE v_tipo_pago ENUM('SEMANAL', 'QUINCENAL', 'MENSUAL');
     DECLARE v_salario_base DECIMAL(10,2);
     DECLARE v_horas_trabajadas DECIMAL(5,2) DEFAULT 0;
     DECLARE v_salario_devengado DECIMAL(10,2);
@@ -408,25 +405,14 @@ sp_calcular_nomina_empleado: BEGIN
     END IF;
     
     -- Obtener información del empleado
-    SELECT tipo_pago, salario_actual 
-    INTO v_tipo_pago, v_salario_base
+    SELECT salario_actual 
+    INTO v_salario_base
     FROM empleados 
     WHERE id_empleado = p_id_empleado AND estado = 'ACTIVO';
     
-    IF v_tipo_pago IS NULL THEN
-        SET p_resultado = FALSE;
-        SET p_mensaje = 'No existe el empleado o no está activo';
-        ROLLBACK;
-        LEAVE sp_calcular_nomina_empleado;
-    END IF;
+
     
-    -- Verificar que el tipo de período corresponda con el tipo de pago del empleado
-    IF v_tipo_periodo != v_tipo_pago THEN
-        SET p_resultado = FALSE;
-        SET p_mensaje = 'El tipo de período no corresponde con el tipo de pago del empleado';
-        ROLLBACK;
-        LEAVE sp_calcular_nomina_empleado;
-    END IF;
+
     
     -- Verificar si ya existe una nómina calculada para este empleado en este período
     SELECT EXISTS (
@@ -729,7 +715,7 @@ sp_procesar_periodo_nomina: BEGIN
     DECLARE cur_empleados CURSOR FOR
         SELECT e.id_empleado
         FROM empleados e
-        WHERE e.estado = 'ACTIVO' AND e.tipo_pago = v_tipo_periodo;
+        WHERE e.estado = 'ACTIVO';
     
     -- Manejador para cuando no hay más registros
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_finished = 1;

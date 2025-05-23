@@ -310,12 +310,12 @@ const DetalleLiquidacion = () => {
           </Button>
         )}
         
-        {liquidacion.estado === 'PAGADO' && (
+        {/* {liquidacion.estado === 'PAGADO' && (
           <Button variant="primary">
             <FaFileDownload className="me-2" />
             Descargar Comprobante
           </Button>
-        )}
+        )} */}
       </div>
       
       {/* Modal de Pago */}

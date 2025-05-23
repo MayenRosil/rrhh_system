@@ -3,29 +3,51 @@ const db = require('../config/database');
 class LiquidacionModel {
   // Método para calcular liquidación
   async calcularLiquidacion(liquidacionData) {
+  try {
+    
+    // Obtener una conexión del pool
+    const conn = await db.pool.getConnection();
+    
     try {
-      // Llamar al procedimiento almacenado
-      const result = await db.callProcedure('sp_calcular_liquidacion', [
+             const query = `
+        CALL sp_calcular_liquidacion(?, ?, ?, @id_liquidacion, @p_resultado, @p_mensaje)
+      `;
+      
+      await conn.query(query, [
         liquidacionData.id_empleado,
         liquidacionData.fecha_liquidacion,
         liquidacionData.motivo,
-        '@id_liquidacion',
-        '@resultado',
-        '@mensaje'
       ]);
+      // Obtener los valores de los parámetros de salida
+      const [rows] = await conn.query('SELECT @id_liquidacion as liquidacion, @p_resultado as resultado, @p_mensaje as mensaje');
       
-      // Obtener los parámetros de salida
-      const outParams = await db.query('SELECT @id_liquidacion as id, @resultado as resultado, @mensaje as mensaje');
+      console.log('Parámetros de salida:', rows);
       
-      return {
-        success: outParams[0].resultado,
-        message: outParams[0].mensaje,
-        id: outParams[0].id
-      };
-    } catch (error) {
-      console.error('Error al calcular liquidación:', error);
-      throw error;
+      if (rows && rows.length > 0) {
+        return {
+          success: rows[0].resultado > 0,
+          message: rows[0].mensaje || 'Liquidacion creada exitosamente',
+          id: rows[0].resultado > 0 ? rows[0].resultado : null
+        };
+      } else {
+        return {
+          success: false,
+          message: 'No se pudo obtener la respuesta del servidor',
+          id: null
+        };
+      }
+    } finally {
+      // Liberar la conexión al pool
+      conn.release();
     }
+  } catch (error) {
+    console.error('Error al liquidar empleado:', error);
+    return {
+      success: false,
+      message: 'Error al liquidar empleado',
+      error: error.message || 'Error interno del servidor'
+    };
+  }
   }
   
   // Método para obtener todas las liquidaciones

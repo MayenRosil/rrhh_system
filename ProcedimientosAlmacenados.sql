@@ -993,5 +993,127 @@ END //
 
 -- -----------------------------------------------------------------
 
+CREATE PROCEDURE `sp_login_empleado`(
+    IN p_email VARCHAR(100),
+    OUT p_id_empleado INT,
+    OUT p_codigo_empleado VARCHAR(50),
+    OUT p_nombre VARCHAR(100),
+    OUT p_apellido VARCHAR(100),
+    OUT p_password VARCHAR(255),
+    OUT p_id_rol INT,
+    OUT p_estado VARCHAR(20),
+    OUT p_resultado BOOLEAN,
+    OUT p_mensaje VARCHAR(255)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = FALSE;
+        SET p_mensaje = 'Error al consultar empleado';
+    END;
+
+    SELECT id_empleado, codigo_empleado, nombre, apellido, password, id_rol, estado
+    INTO p_id_empleado, p_codigo_empleado, p_nombre, p_apellido, p_password, p_id_rol, p_estado
+    FROM empleados
+    WHERE email = p_email
+    LIMIT 1;
+
+    IF p_id_empleado IS NULL THEN
+        SET p_resultado = FALSE;
+        SET p_mensaje = 'Credenciales inválidas';
+    ELSEIF p_estado != 'ACTIVO' THEN
+        SET p_resultado = FALSE;
+        SET p_mensaje = 'Usuario inactivo';
+    ELSE
+        SET p_resultado = TRUE;
+        SET p_mensaje = 'Usuario encontrado';
+    END IF;
+END //
+
+
+-- -----------------------------------------------------------------
+
+
+CREATE PROCEDURE `sp_obtener_nombre_rol`(
+    IN p_id_rol INT,
+    OUT p_nombre_rol VARCHAR(100),
+    OUT p_resultado BOOLEAN,
+    OUT p_mensaje VARCHAR(255)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = FALSE;
+        SET p_mensaje = 'Error al obtener el rol';
+    END;
+
+    SELECT nombre INTO p_nombre_rol
+    FROM roles
+    WHERE id_rol = p_id_rol;
+
+    IF p_nombre_rol IS NULL THEN
+        SET p_resultado = FALSE;
+        SET p_mensaje = 'Rol no encontrado';
+    ELSE
+        SET p_resultado = TRUE;
+        SET p_mensaje = 'Rol obtenido exitosamente';
+    END IF;
+END //
+
+
+-- -----------------------------------------------------------------
+
+
+CREATE PROCEDURE `sp_obtener_todos_roles`(
+    OUT p_resultado BOOLEAN,
+    OUT p_mensaje VARCHAR(255)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = FALSE;
+        SET p_mensaje = 'Error al obtener los roles';
+    END;
+
+    SELECT id_rol, nombre, descripcion, activo
+    FROM roles
+    ORDER BY id_rol ASC;
+
+    SET p_resultado = TRUE;
+    SET p_mensaje = 'Roles obtenidos exitosamente';
+END //
+
+-- -----------------------------------------------------------------
+
+
+CREATE PROCEDURE `sp_obtener_todos_empleados`(
+    OUT p_resultado BOOLEAN,
+    OUT p_mensaje VARCHAR(255)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = FALSE;
+        SET p_mensaje = 'Error al obtener los empleados';
+    END;
+
+    SELECT e.id_empleado, e.codigo_empleado, e.nombre, e.apellido, 
+           e.dpi, e.fecha_nacimiento, e.direccion, e.telefono, 
+           e.email, e.fecha_contratacion, e.fecha_fin_contrato, 
+           e.estado, e.salario_actual, 
+           p.nombre AS puesto, d.nombre AS departamento, 
+           r.nombre AS rol
+    FROM empleados e
+    JOIN puestos p ON e.id_puesto = p.id_puesto
+    JOIN departamentos d ON p.id_departamento = d.id_departamento
+    JOIN roles r ON e.id_rol = r.id_rol
+    ORDER BY e.nombre, e.apellido;
+
+    SET p_resultado = TRUE;
+    SET p_mensaje = 'Empleados obtenidos exitosamente';
+END //
+
+
+-- -----------------------------------------------------------------
 
 DELIMITER ;

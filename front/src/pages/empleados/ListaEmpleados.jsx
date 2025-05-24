@@ -34,7 +34,7 @@ const ListaEmpleados = () => {
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = empleados.filter(empleado => 
+      const filtered = empleados.filter(empleado =>
         empleado.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         empleado.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
         empleado.codigo_empleado.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -109,43 +109,44 @@ const ListaEmpleados = () => {
         </thead>
         <tbody>
           {filteredEmpleados.length > 0 ? (
-            filteredEmpleados.map((empleado) => (
-              <tr key={empleado.id_empleado}>
-                <td>{empleado.codigo_empleado}</td>
-                <td>{empleado.nombre} {empleado.apellido}</td>
-                <td>{empleado.puesto}</td>
-                <td>{empleado.departamento}</td>
-                <td>Q {Number(empleado.salario_actual).toFixed(2)}</td>
-                <td>{getEstadoBadge(empleado.estado)}</td>
-                <td>
-                  <div className="d-flex gap-2">
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      as={Link}
-                      to={`/empleados/${empleado.id_empleado}`}
-                      title="Editar"
-                    >
-                      <FaEdit />
-                    </Button>
-                    
-                    {/* {empleado.estado === 'ACTIVO' && (
-                      <>       
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          as={Link}
-                          to={`/empleados/${empleado.id_empleado}/baja`}
-                          title="Dar de Baja"
-                        >
-                          <FaUserMinus />
-                        </Button>
-                      </>
-                    )} */}
-                  </div>
-                </td>
-              </tr>
-            ))
+            [...filteredEmpleados]
+              .sort((a, b) => a.id_empleado - b.id_empleado)
+              .map((empleado) => (
+                <tr key={empleado.id_empleado}>
+                  <td>{empleado.codigo_empleado}</td>
+                  <td>{empleado.nombre} {empleado.apellido}</td>
+                  <td>{empleado.puesto}</td>
+                  <td>{empleado.departamento}</td>
+                  <td>Q {Number(empleado.salario_actual).toFixed(2)}</td>
+                  <td>{getEstadoBadge(empleado.estado)}</td>
+                  <td>
+                    <div className="d-flex gap-2">
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        as={Link}
+                        to={`/empleados/${empleado.id_empleado}`}
+                        title="Editar"
+                      >
+                        <FaEdit />
+                      </Button>
+                      {/* 
+            {empleado.estado === 'ACTIVO' && (
+              <Button
+                variant="outline-danger"
+                size="sm"
+                as={Link}
+                to={`/empleados/${empleado.id_empleado}/baja`}
+                title="Dar de Baja"
+              >
+                <FaUserMinus />
+              </Button>
+            )} 
+            */}
+                    </div>
+                  </td>
+                </tr>
+              ))
           ) : (
             <tr>
               <td colSpan="7" className="text-center">
@@ -153,6 +154,7 @@ const ListaEmpleados = () => {
               </td>
             </tr>
           )}
+
         </tbody>
       </Table>
     </Container>

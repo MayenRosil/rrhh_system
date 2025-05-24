@@ -46,18 +46,18 @@ const PeriodosNomina = () => {
     try {
       setProcesando(true);
       const resultado = await procesarPeriodo(periodoSeleccionado.id_periodo);
-      
+
       if (resultado.success) {
         // Actualizar estado del período
-        const updatedPeriodos = periodos.map(p => 
+        const updatedPeriodos = periodos.map(p =>
           p.id_periodo === periodoSeleccionado.id_periodo
             ? { ...p, estado: 'PROCESADO' }
             : p
         );
-        
+
         setPeriodos(updatedPeriodos);
         setShowModal(false);
-        
+
         // Mostrar mensaje de éxito
         alert('Período procesado exitosamente');
       } else {
@@ -131,51 +131,53 @@ const PeriodosNomina = () => {
         </thead>
         <tbody>
           {periodos.length > 0 ? (
-            periodos.map((periodo) => (
-              <tr key={periodo.id_periodo}>
-                <td>{getTipoPeriodo(periodo.tipo)}</td>
-                <td>{moment(periodo.fecha_inicio).format('DD/MM/YYYY')}</td>
-                <td>{moment(periodo.fecha_fin).format('DD/MM/YYYY')}</td>
-                <td>{getEstadoBadge(periodo.estado)}</td>
-                <td>{moment(periodo.fecha_creacion).format('DD/MM/YYYY')}</td>
-                <td>
-                  <div className="d-flex gap-2">
-                    <Button
-                      variant="outline-info"
-                      size="sm"
-                      as={Link}
-                      to={`/nomina/periodos/${periodo.id_periodo}/nominas`}
-                      title="Ver Nóminas"
-                    >
-                      <FaEye />
-                    </Button>
-                    
-                    {periodo.estado === 'ABIERTO' && (
+            [...periodos] 
+              .sort((a, b) => b.id_periodo - a.id_periodo)
+              .map((periodo) => (
+                <tr key={periodo.id_periodo}>
+                  <td>{getTipoPeriodo(periodo.tipo)}</td>
+                  <td>{moment(periodo.fecha_inicio).format('DD/MM/YYYY')}</td>
+                  <td>{moment(periodo.fecha_fin).format('DD/MM/YYYY')}</td>
+                  <td>{getEstadoBadge(periodo.estado)}</td>
+                  <td>{moment(periodo.fecha_creacion).format('DD/MM/YYYY')}</td>
+                  <td>
+                    <div className="d-flex gap-2">
                       <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={() => handleProcesarPeriodo(periodo)}
-                        title="Procesar Período"
-                      >
-                        <FaPlay />
-                      </Button>
-                    )}
-                    
-                    {periodo.estado === 'PROCESADO' && (
-                      <Button
-                        variant="outline-success"
+                        variant="outline-info"
                         size="sm"
                         as={Link}
-                        to={`/reportes/nomina/${periodo.id_periodo}`}
-                        title="Generar Reporte"
+                        to={`/nomina/periodos/${periodo.id_periodo}/nominas`}
+                        title="Ver Nóminas"
                       >
-                        <FaMoneyBillWave />
+                        <FaEye />
                       </Button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))
+
+                      {periodo.estado === 'ABIERTO' && (
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={() => handleProcesarPeriodo(periodo)}
+                          title="Procesar Período"
+                        >
+                          <FaPlay />
+                        </Button>
+                      )}
+
+                      {periodo.estado === 'PROCESADO' && (
+                        <Button
+                          variant="outline-success"
+                          size="sm"
+                          as={Link}
+                          to={`/reportes/nomina/${periodo.id_periodo}`}
+                          title="Generar Reporte"
+                        >
+                          <FaMoneyBillWave />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
           ) : (
             <tr>
               <td colSpan="6" className="text-center">
@@ -185,7 +187,7 @@ const PeriodosNomina = () => {
           )}
         </tbody>
       </Table>
-      
+
       {/* Modal de confirmación */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>

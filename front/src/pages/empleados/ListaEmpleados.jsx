@@ -121,6 +121,8 @@ const ListaEmpleados = () => {
                   <td>{getEstadoBadge(empleado.estado)}</td>
                   <td>
                     <div className="d-flex gap-2">
+
+            {empleado.estado === 'ACTIVO' && (
                       <Button
                         variant="outline-primary"
                         size="sm"
@@ -130,6 +132,7 @@ const ListaEmpleados = () => {
                       >
                         <FaEdit />
                       </Button>
+            )} 
                       {/* 
             {empleado.estado === 'ACTIVO' && (
               <Button

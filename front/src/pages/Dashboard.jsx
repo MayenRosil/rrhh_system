@@ -4,6 +4,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { registrarEntrada, registrarSalida, getMisMarcajes } from '../services/marcajeService';
 import moment from 'moment';
 import 'moment/locale/es';
+import { getAllEmpleados } from '../services/empleadoService';
+import { getSolicitudesVacaciones } from '../services/vacacionesService';
+
 
 moment.locale('es');
 
@@ -16,7 +19,52 @@ const Dashboard = () => {
   const [salidaRegistrada, setSalidaRegistrada] = useState(false);
   const [error, setError] = useState(null);
 
+    const [empleados, setEmpleados] = useState([]);
+
   useEffect(() => {
+
+    
+
+
+
+        if(!isAdmin())fetchMarcajes();
+    
+        if(isAdmin())fetchMarcajesGenerales();
+      if(isAdmin()) fetchEmpleados();
+  }, []);
+        const fetchEmpleados = async () => {
+          try {
+            const resultado = await getAllEmpleados();
+            if (resultado.success) {
+              setEmpleados(resultado.data);
+            } else {
+              setError(resultado.message || 'Error al cargar los empleados');
+            }
+          } catch (error) {
+            console.error('Error al cargar empleados:', error);
+            setError('Error al cargar los empleados');
+          } finally {
+            setLoading(false);
+          }
+        };
+      const fetchMarcajesGenerales = async () => {
+      try {
+       const [marcajesRes] = await Promise.all([
+         getSolicitudesVacaciones(''),
+       ]);
+       
+       if (marcajesRes.success) {
+         setMarcajes(marcajesRes.data);
+       } else {
+         setError(marcajesRes.message || 'Error al cargar los marcajes');
+       }
+      } catch (error) {
+        console.error('Error al cargar marcajes:', error);
+        setError('Error al cargar los marcajes');
+      } finally {
+        setLoading(false);
+      }
+    };
     const fetchMarcajes = async () => {
       try {
         const fechaHoy = moment().format('YYYY-MM-DD');
@@ -49,10 +97,6 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
-    fetchMarcajes();
-  }, []);
-
   const handleRegistrarEntrada = async () => {
     setError(null);
     try {
@@ -109,6 +153,7 @@ const Dashboard = () => {
       )}
       
       <Row>
+        {!isAdmin() && 
         <Col md={6}>
           <Card className="mb-4">
             <Card.Header as="h5">Marcajes</Card.Header>
@@ -157,13 +202,14 @@ const Dashboard = () => {
             </Card.Body>
           </Card>
         </Col>
+          }
         
         <Col md={6}>
           <Card className="mb-4">
             <Card.Header as="h5">Información</Card.Header>
             <Card.Body>
               <p><strong>Nombre:</strong> {user ? `${user.nombre} ${user.apellido}` : ''}</p>
-              <p><strong>Código de Empleado:</strong> {user ? user.codigo : ''}</p>
+              <p><strong>Código de Empleado:</strong> {user ? user.codigo_empleado : ''}</p>
               <p><strong>Rol:</strong> {user ? user.rol : ''}</p>
               
               {isAdmin() ? (
@@ -173,6 +219,9 @@ const Dashboard = () => {
                   </Button>
                   <Button variant="outline-primary" href="/nomina/periodos">
                     Gestionar Nómina
+                  </Button>
+                  <Button variant="outline-primary" href="/vacaciones/solicitudes">
+                    Gestionar Vacaciones
                   </Button>
                 </div>
               ) : (
@@ -188,6 +237,34 @@ const Dashboard = () => {
             </Card.Body>
           </Card>
         </Col>
+
+
+        {isAdmin() &&
+        <Col md={6}>
+          <Card className="mb-4">
+            <Card.Header as="h5">Empleados</Card.Header>
+            <Card.Body>
+              <p><strong>Empleados registrados:</strong> </p>
+              <p><strong>{empleados.length}</strong></p>
+            </Card.Body>
+          </Card>
+        </Col>
+         }
+        {isAdmin() &&
+        <Col md={6}>
+          <Card className="mb-4">
+            <Card.Header as="h5">Vacaciones</Card.Header>
+            <Card.Body>
+              <p><strong>Vacaciones aprobadas:</strong> </p>
+              <p><strong>{marcajes.filter(m => m.estado === "APROBADO").length}</strong></p>
+              <p><strong>Vacaciones rechazadas:</strong> </p>
+              <p><strong>{marcajes.filter(m => m.estado === "RECHAZADO").length}</strong></p>
+              <p><strong>Vacaciones pendientes de aprobar:</strong> </p>
+              <p><strong>{marcajes.filter(m => m.estado === "SOLICITADO").length}</strong></p>
+            </Card.Body>
+          </Card>
+        </Col>
+         }
       </Row>
     </Container>
   );

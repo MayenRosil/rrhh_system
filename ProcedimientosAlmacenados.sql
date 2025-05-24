@@ -704,7 +704,7 @@ BEGIN
 END //
 
 -- -----------------------------------------------------------------
-
+DELIMITER //
 CREATE PROCEDURE `sp_procesar_periodo_nomina`(
     IN p_id_periodo INT,
     OUT p_resultado BOOLEAN,

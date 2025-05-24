@@ -62,10 +62,9 @@ router.get('/departamento/:id', verifyToken, async (req, res) => {
   }
 });
 
-// Crear puesto (solo admin)
+// Crear puesto
 router.post('/', verifyToken, isAdmin, validarPuesto, async (req, res) => {
   try {
-    // Validar los datos de entrada
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -110,10 +109,9 @@ router.post('/', verifyToken, isAdmin, validarPuesto, async (req, res) => {
   }
 });
 
-// Actualizar puesto (solo admin)
+// Actualizar puesto
 router.put('/:id', verifyToken, isAdmin, validarPuesto, async (req, res) => {
   try {
-    // Validar los datos de entrada
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({

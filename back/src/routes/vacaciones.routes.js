@@ -13,7 +13,6 @@ const validarSolicitarVacaciones = [
 // Rutas para empleados
 router.post('/solicitar', verifyToken, validarSolicitarVacaciones, vacacionesController.solicitarVacaciones);
 router.get('/mis-solicitudes', verifyToken, vacacionesController.getMisSolicitudesVacaciones);
-// Continuación del archivo src/routes/vacaciones.routes.js
 router.get('/mis-periodos', verifyToken, vacacionesController.getMisPeriodosVacacionales);
 
 // Rutas para administradores

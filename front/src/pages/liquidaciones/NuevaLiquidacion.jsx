@@ -61,7 +61,7 @@ const NuevaLiquidacion = () => {
       const resultado = await calcularLiquidacion(values);
       
       if (resultado.success) {
-        navigate(`/liquidaciones/${resultado.id}`);
+        navigate(`/liquidaciones`);
       } else {
         setStatus({ error: resultado.message || 'Error al calcular la liquidación' });
       }

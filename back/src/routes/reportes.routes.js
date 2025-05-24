@@ -23,7 +23,7 @@ router.get('/nomina/periodo/:id', verifyToken, isAdmin, async (req, res) => {
       });
     }
     
-    // Obtener nóminas del período con detalles
+    // Obtener nóminas del período
     const nominas = await db.query(`
       SELECT 
         n.id_nomina,
@@ -182,7 +182,6 @@ router.get('/vacaciones/departamento/:id', verifyToken, isAdmin, async (req, res
       moment(fechaFin).format('YYYY-MM-DD') : 
       moment().endOf('year').format('YYYY-MM-DD');
     
-    // Construir la consulta
     let query = `
       SELECT 
         v.id_vacacion,

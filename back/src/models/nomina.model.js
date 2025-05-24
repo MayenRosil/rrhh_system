@@ -99,7 +99,6 @@ class NominaModel {
   async procesarPeriodo(idPeriodo) {
   try {
     
-    // Obtener una conexión del pool
     const conn = await db.pool.getConnection();
     
     try {
@@ -110,7 +109,7 @@ class NominaModel {
       await conn.query(query, [
         idPeriodo
       ]);
-      // Obtener los valores de los parámetros de salida
+      
       const [rows] = await conn.query('SELECT @p_resultado as resultado, @p_mensaje as mensaje');
       
       console.log('Parámetros de salida:', rows);
@@ -129,7 +128,7 @@ class NominaModel {
         };
       }
     } finally {
-      // Liberar la conexión al pool
+      
       conn.release();
     }
   } catch (error) {
@@ -176,7 +175,7 @@ class NominaModel {
   // Método para obtener una nómina por ID
   async getNominaById(idNomina) {
     try {
-      // Obtener la información básica de la nómina
+      
       const nominas = await db.query(`
         SELECT 
           n.id_nomina,
@@ -207,7 +206,7 @@ class NominaModel {
       
       const nomina = nominas[0];
       
-// Continuación del archivo src/models/nomina.model.js
+      
       // Obtener las deducciones
       const deducciones = await db.query(`
         SELECT 

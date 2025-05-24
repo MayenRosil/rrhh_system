@@ -853,7 +853,6 @@ BEGIN
             -- Registrar entrada
             INSERT INTO marcajes (id_empleado, fecha, hora_entrada)
             VALUES (p_id_empleado, CURDATE(), NOW());
-            -- Continuación del procedimiento para registrar marcaje de entrada
             SET p_id_marcaje = LAST_INSERT_ID();
             SET p_resultado = TRUE;
             SET p_mensaje = 'Entrada registrada exitosamente';

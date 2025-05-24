@@ -1107,7 +1107,7 @@ BEGIN
     JOIN puestos p ON e.id_puesto = p.id_puesto
     JOIN departamentos d ON p.id_departamento = d.id_departamento
     JOIN roles r ON e.id_rol = r.id_rol
-    ORDER BY id_empleado DESC;
+    ORDER BY e.nombre, e.apellido;
 
     SET p_resultado = TRUE;
     SET p_mensaje = 'Empleados obtenidos exitosamente';

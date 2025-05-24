@@ -136,7 +136,6 @@ class VacacionesModel {
           v.fecha_creacion
         FROM vacaciones v
         JOIN empleados e ON v.id_empleado = e.id_empleado
-        ORDER BY v.id_vacacion DESC
       `;
       
       const params = [];
@@ -171,7 +170,7 @@ class VacacionesModel {
           v.fecha_creacion
         FROM vacaciones v
         WHERE v.id_empleado = ?
-        ORDER BY v.id_vacacion DESC
+        ORDER BY v.fecha_creacion DESC
       `, [idEmpleado]);
       
       return solicitudes;

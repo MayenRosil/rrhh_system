@@ -3,28 +3,28 @@ const bcrypt = require('bcrypt');
 
 class EmpleadoModel {
   // Método para obtener todos los empleados
-  async getAll() {
+async getAll() {
+  try {
+    const conn = await db.pool.getConnection();
+
     try {
-      const empleados = await db.query(`
-        SELECT e.id_empleado, e.codigo_empleado, e.nombre, e.apellido, 
-               e.dpi, e.fecha_nacimiento, e.direccion, e.telefono, 
-               e.email, e.fecha_contratacion, e.fecha_fin_contrato, 
-               e.estado, e.salario_actual, 
-               p.nombre AS puesto, d.nombre AS departamento, 
-               r.nombre AS rol
-        FROM empleados e
-        JOIN puestos p ON e.id_puesto = p.id_puesto
-        JOIN departamentos d ON p.id_departamento = d.id_departamento
-        JOIN roles r ON e.id_rol = r.id_rol
-        ORDER BY e.nombre, e.apellido
-      `);
-      
-      return empleados;
-    } catch (error) {
-      console.error('Error al obtener empleados:', error);
-      throw error;
+      const [empleados] = await conn.query('CALL sp_obtener_todos_empleados(@p_resultado, @p_mensaje)');
+      const [output] = await conn.query('SELECT @p_resultado AS resultado, @p_mensaje AS mensaje');
+
+      if (!output[0].resultado) {
+        console.error(output[0].mensaje);
+        return [];
+      }
+
+      return empleados[0];
+    } finally {
+      conn.release();
     }
+  } catch (error) {
+    console.error('Error al obtener empleados:', error);
+    throw error;
   }
+}
   
   // Método para obtener un empleado por ID
   async getById(id) {

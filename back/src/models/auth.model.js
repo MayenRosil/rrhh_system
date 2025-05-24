@@ -3,32 +3,27 @@ const bcrypt = require('bcrypt');
 
 class AuthModel {
   // Método para validar credenciales
-  async login(email, password) {
+async login(email, password) {
+  try {
+    const conn = await db.pool.getConnection();
+
     try {
-      // Buscar el empleado por email
-      const usuarios = await db.query(
-        'SELECT id_empleado, codigo_empleado, nombre, apellido, email, password, id_rol, estado FROM empleados WHERE email = ?',
-        [email]
-      );
+      // Ejecutar SP para obtener empleado por email
+      await conn.query('CALL sp_login_empleado(?, @id_empleado, @codigo_empleado, @nombre, @apellido, @password, @id_rol, @estado, @resultado, @mensaje)', [email]);
 
-      if (usuarios.length === 0) {
+      // Obtener resultados del SP
+      const [usuarioRows] = await conn.query('SELECT @id_empleado AS id_empleado, @codigo_empleado AS codigo_empleado, @nombre AS nombre, @apellido AS apellido, @password AS password, @id_rol AS id_rol, @estado AS estado, @resultado AS resultado, @mensaje AS mensaje');
+
+      const usuario = usuarioRows[0];
+
+      if (!usuario.resultado) {
         return {
           success: false,
-          message: 'Credenciales inválidas'
+          message: usuario.mensaje
         };
       }
 
-      const usuario = usuarios[0];
-
-      // Verificar el estado del usuario
-      if (usuario.estado !== 'ACTIVO') {
-        return {
-          success: false,
-          message: 'Usuario inactivo'
-        };
-      }
-
-      // Verificar la contraseña
+      // Verificar contraseña
       const passwordMatch = await bcrypt.compare(password, usuario.password);
 
       if (!passwordMatch) {
@@ -38,34 +33,47 @@ class AuthModel {
         };
       }
 
+      // Obtener nombre del rol
+      await conn.query('CALL sp_obtener_nombre_rol(?, @nombre_rol, @rol_resultado, @rol_mensaje)', [usuario.id_rol]);
+      
+      const [rolRows] = await conn.query('SELECT @nombre_rol AS nombre_rol, @rol_resultado AS resultado, @rol_mensaje AS mensaje');
 
+      if (!rolRows[0].resultado) {
+        return {
+          success: false,
+          message: rolRows[0].mensaje
+        };
+      }
 
-      // Obtener el nombre del rol
-      const roles = await db.query(
-        'SELECT nombre FROM roles WHERE id_rol = ?',
-        [usuario.id_rol]
-      );
-
-
-      // Preparar los datos del usuario (sin incluir la contraseña)
+      // Preparar los datos del usuario
       const userData = {
         id: usuario.id_empleado,
         codigo: usuario.codigo_empleado,
         nombre: usuario.nombre,
         apellido: usuario.apellido,
-        email: usuario.email,
-        rol: roles[0].nombre
+        email: email,
+        rol: rolRows[0].nombre_rol
       };
 
       return {
         success: true,
         user: userData
       };
-    } catch (error) {
-      console.error('Error al iniciar sesión:', error);
-      throw error;
+
+    } finally {
+      conn.release();
     }
+
+  } catch (error) {
+    console.error('Error al iniciar sesión:', error);
+    return {
+      success: false,
+      message: 'Error al iniciar sesión',
+      error: error.message || 'Error interno del servidor'
+    };
   }
+}
+
 
   // Método para cambiar contraseña
   async changePassword(userId, oldPassword, newPassword) {

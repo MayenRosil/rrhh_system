@@ -355,7 +355,6 @@ END //
 
 -- -----------------------------------------------------------------
 
-DELIMITER //
 
 CREATE PROCEDURE `sp_calcular_nomina_empleado`(
     IN p_id_empleado INT,
@@ -726,7 +725,8 @@ sp_procesar_periodo_nomina: BEGIN
     DECLARE cur_empleados CURSOR FOR
         SELECT e.id_empleado
         FROM empleados e
-        WHERE e.estado = 'ACTIVO';
+        WHERE e.estado = 'ACTIVO'
+        AND e.fecha_contratacion <= (SELECT fecha_fin FROM periodos_nomina WHERE id_periodo = p_id_periodo);
     
     -- Manejador para cuando no hay más registros
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_finished = 1;

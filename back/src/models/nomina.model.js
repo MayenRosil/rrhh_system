@@ -63,7 +63,7 @@ class NominaModel {
           estado,
           fecha_creacion
         FROM periodos_nomina
-        ORDER BY fecha_inicio DESC
+        ORDER BY id_periodo DESC
       `);
       
       return periodos;
@@ -163,7 +163,7 @@ class NominaModel {
         FROM nominas n
         JOIN empleados e ON n.id_empleado = e.id_empleado
         WHERE n.id_periodo = ?
-        ORDER BY e.nombre, e.apellido
+        ORDER n.id_empleado
       `, [idPeriodo]);
       
       return nominas;
@@ -335,7 +335,7 @@ class NominaModel {
         FROM nominas n
         JOIN periodos_nomina p ON n.id_periodo = p.id_periodo
         WHERE n.id_empleado = ?
-        ORDER BY p.fecha_fin DESC
+        ORDER BY n.id_nomina DESC
       `, [idEmpleado]);
       
       return nominas;

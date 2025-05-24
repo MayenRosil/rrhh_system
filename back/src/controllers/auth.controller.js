@@ -6,12 +6,10 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 class AuthController {
-  // Método para iniciar sesión
   async login(req, res) {
     try {
       const { email, password } = req.body;
       
-      // Validar que se proporcionaron email y password
       if (!email || !password) {
         return res.status(400).json({
           success: false,
@@ -19,21 +17,18 @@ class AuthController {
         });
       }
       
-      // Intentar autenticar
       const loginResult = await authModel.login(email, password);
       
       if (!loginResult.success) {
         return res.status(401).json(loginResult);
       }
       
-      // Generar token JWT
       const token = jwt.sign(
         { id: loginResult.user.id, rol: loginResult.user.rol },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN }
       );
       
-      // Responder con el token y datos del usuario
       return res.status(200).json({
         success: true,
         token,
@@ -49,12 +44,10 @@ class AuthController {
     }
   }
   
-  // Método para obtener información del usuario actual
   async getProfile(req, res) {
     try {
       const userId = req.user.id;
       
-      // Obtener datos del usuario
       const usuario = await empleadoModel.getById(userId);
       
       if (!usuario) {
@@ -64,7 +57,6 @@ class AuthController {
         });
       }
       
-      // No enviar la contraseña
       delete usuario.password;
       
       return res.status(200).json({
@@ -80,14 +72,12 @@ class AuthController {
       });
     }
   }
-  
-  // Método para cambiar contraseña
+
   async changePassword(req, res) {
     try {
       const userId = req.user.id;
       const { oldPassword, newPassword } = req.body;
       
-      // Validar que se proporcionaron las contraseñas
       if (!oldPassword || !newPassword) {
         return res.status(400).json({
           success: false,
@@ -95,15 +85,13 @@ class AuthController {
         });
       }
       
-      // Validar que la nueva contraseña tenga al menos 6 caracteres
       if (newPassword.length < 6) {
         return res.status(400).json({
           success: false,
           message: 'La nueva contraseña debe tener al menos 6 caracteres'
         });
       }
-      
-      // Cambiar la contraseña
+
       const result = await authModel.changePassword(userId, oldPassword, newPassword);
       
       return res.status(result.success ? 200 : 400).json(result);

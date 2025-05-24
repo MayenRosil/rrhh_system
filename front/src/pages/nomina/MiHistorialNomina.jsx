@@ -17,7 +17,7 @@ const MiHistorialNomina = () => {
     const fetchNominas = async () => {
       try {
         const resultado = await getMiHistorialNominas();
-        
+
         if (resultado.success) {
           setNominas(resultado.data);
         } else {
@@ -73,11 +73,11 @@ const MiHistorialNomina = () => {
   return (
     <Container>
       <h1 className="mb-4">Mi Historial de Nómina</h1>
-      
+
       {error && (
         <Alert variant="danger">{error}</Alert>
       )}
-      
+
       <Card>
         <Card.Body>
           <Table striped bordered hover responsive>
@@ -92,7 +92,6 @@ const MiHistorialNomina = () => {
                 <th>Sueldo Líquido</th>
                 <th>Estado</th>
                 <th>Fecha Pago</th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -108,29 +107,7 @@ const MiHistorialNomina = () => {
                     <td><strong>Q {Number(nomina.sueldo_liquido).toFixed(2)}</strong></td>
                     <td>{getEstadoBadge(nomina.estado)}</td>
                     <td>{nomina.fecha_pago ? moment(nomina.fecha_pago).format('DD/MM/YYYY') : '-'}</td>
-                    <td>
-                      <div className="d-flex gap-2">
-                        <Button
-                          variant="outline-info"
-                          size="sm"
-                          as={Link}
-                          to={`/nomina/nominas/${nomina.id_nomina}`}
-                          title="Ver Detalle"
-                        >
-                          <FaEye />
-                        </Button>
-                        
-                        {nomina.estado === 'PAGADO' && (
-                          <Button
-                            variant="outline-primary"
-                            size="sm"
-                            title="Descargar Boleta"
-                          >
-                            <FaFileDownload />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
+
                   </tr>
                 ))
               ) : (

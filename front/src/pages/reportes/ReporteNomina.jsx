@@ -80,24 +80,7 @@ const ReporteNomina = () => {
 
   return (
     <Container>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Reporte de Nómina</h1>
-        <div className="d-flex gap-2">
-          <Button variant="primary" onClick={handlePrint}>
-            <FaPrint className="me-2" />
-            Imprimir
-          </Button>
-          <Button variant="success">
-            <FaFileExcel className="me-2" />
-            Excel
-          </Button>
-          <Button variant="danger">
-            <FaFilePdf className="me-2" />
-            PDF
-            </Button>
-        </div>
-      </div>
-      
+    
       <div ref={reporteRef} className="p-3">
         <div className="report-header text-center mb-4">
           <h2 className="report-title">Reporte de Nómina</h2>

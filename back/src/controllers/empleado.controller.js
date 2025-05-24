@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 const { validationResult } = require('express-validator');
 
 class EmpleadoController {
-  // Método para obtener todos los empleados
   async getAll(req, res) {
     try {
       const empleados = await empleadoModel.getAll();
@@ -22,7 +21,6 @@ class EmpleadoController {
     }
   }
   
-  // Método para obtener un empleado por ID
   async getById(req, res) {
     try {
       const { id } = req.params;
@@ -49,11 +47,9 @@ class EmpleadoController {
     }
   }
   
-  // Método para crear un nuevo empleado
   async create(req, res) {
     console.log('Creando empleado:', req.body);
     try {
-      // Validar los datos de entrada
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -63,7 +59,6 @@ class EmpleadoController {
         });
       }
       
-      // Crear el empleado
       const result = await empleadoModel.create(req.body);
       
       return res.status(result.success ? 201 : 400).json(result);
@@ -76,11 +71,9 @@ class EmpleadoController {
       });
     }
   }
-  
-  // Método para actualizar un empleado
+
   async update(req, res) {
     try {
-      // Validar los datos de entrada
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -92,7 +85,6 @@ class EmpleadoController {
       
       const { id } = req.params;
       
-      // Actualizar el empleado
       const result = await empleadoModel.update(id, req.body);
       
       return res.status(result.success ? 200 : 400).json(result);
@@ -106,10 +98,8 @@ class EmpleadoController {
     }
   }
   
-  // Método para actualizar el salario de un empleado
   async updateSalario(req, res) {
     try {
-      // Validar los datos de entrada
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -121,10 +111,8 @@ class EmpleadoController {
       
       const { id } = req.params;
       
-      // Agregar el ID del usuario que hace la modificación
       req.body.id_usuario_modificacion = req.user.id;
       
-      // Actualizar el salario
       const result = await empleadoModel.updateSalario(id, req.body);
       
       return res.status(result.success ? 200 : 400).json(result);
@@ -138,10 +126,8 @@ class EmpleadoController {
     }
   }
   
-  // Método para dar de baja a un empleado
   async darDeBaja(req, res) {
     try {
-      // Validar los datos de entrada
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -153,7 +139,6 @@ class EmpleadoController {
       
       const { id } = req.params;
       
-      // Dar de baja al empleado
       const result = await empleadoModel.darDeBaja(id, req.body);
       
       return res.status(result.success ? 200 : 400).json(result);
@@ -166,13 +151,11 @@ class EmpleadoController {
       });
     }
   }
-  
-  // Método para obtener el historial de salarios de un empleado
+
   async getHistorialSalarios(req, res) {
     try {
       const { id } = req.params;
       
-      // Verificar que el empleado existe
       const empleado = await empleadoModel.getById(id);
       if (!empleado) {
         return res.status(404).json({
@@ -181,7 +164,6 @@ class EmpleadoController {
         });
       }
       
-      // Obtener historial
       const historial = await empleadoModel.getHistorialSalarios(id);
       
       return res.status(200).json({

@@ -129,7 +129,7 @@ const ListaEmpleados = () => {
                       <FaEdit />
                     </Button>
                     
-                    {empleado.estado === 'ACTIVO' && (
+                    {/* {empleado.estado === 'ACTIVO' && (
                       <>       
                         <Button
                           variant="outline-danger"
@@ -141,7 +141,7 @@ const ListaEmpleados = () => {
                           <FaUserMinus />
                         </Button>
                       </>
-                    )}
+                    )} */}
                   </div>
                 </td>
               </tr>

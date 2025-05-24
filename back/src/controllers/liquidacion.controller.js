@@ -3,10 +3,8 @@ const moment = require('moment');
 const { validationResult } = require('express-validator');
 
 class LiquidacionController {
-  // Método para calcular liquidación
   async calcularLiquidacion(req, res) {
     try {
-      // Validar los datos de entrada
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -16,7 +14,7 @@ class LiquidacionController {
         });
       }
       
-      // Validar que la fecha de liquidación no sea futura
+
       if (moment(req.body.fecha_liquidacion).isAfter(moment(), 'day')) {
         return res.status(400).json({
           success: false,
@@ -24,7 +22,6 @@ class LiquidacionController {
         });
       }
       
-      // Calcular liquidación
       const result = await liquidacionModel.calcularLiquidacion(req.body);
       
       return res.status(result.success ? 201 : 400).json(result);
@@ -38,7 +35,6 @@ class LiquidacionController {
     }
   }
   
-  // Método para obtener todas las liquidaciones
   async getAllLiquidaciones(req, res) {
     try {
       const liquidaciones = await liquidacionModel.getAllLiquidaciones();
@@ -57,7 +53,6 @@ class LiquidacionController {
     }
   }
   
-  // Método para obtener una liquidación por ID
   async getLiquidacionById(req, res) {
     try {
       const { id } = req.params;
@@ -83,14 +78,12 @@ class LiquidacionController {
       });
     }
   }
-  
-  // Método para marcar una liquidación como pagada
+
   async pagarLiquidacion(req, res) {
     try {
       const { id } = req.params;
       const { fecha_pago, observaciones } = req.body;
       
-      // Validar que se proporcionó la fecha de pago
       if (!fecha_pago || !moment(fecha_pago, 'YYYY-MM-DD').isValid()) {
         return res.status(400).json({
           success: false,
@@ -98,7 +91,6 @@ class LiquidacionController {
         });
       }
       
-      // Verificar que la liquidación existe
       const liquidacion = await liquidacionModel.getLiquidacionById(id);
       if (!liquidacion) {
         return res.status(404).json({
@@ -107,7 +99,6 @@ class LiquidacionController {
         });
       }
       
-      // Pagar la liquidación
       const result = await liquidacionModel.pagarLiquidacion(id, fecha_pago, observaciones || '');
       
       return res.status(result.success ? 200 : 400).json(result);
